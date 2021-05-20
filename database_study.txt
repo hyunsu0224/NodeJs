@@ -1,0 +1,291 @@
+C : Create
+R : Read
+U : Update
+D : Delete
+
+데이터베이스, 컬렉션(collection), 도큐먼트(document)
+
+mongod --dbpath ~~~~(개발하고자 하는 링크)
+use[DB이름]	개발을 하고자하는 DB의 이름 미설정시 test에서 시작이 된다.
+
+db.____.save({객체내용 : '문자열',~~~}); DB를 저장하는 것
+
+show collections 현재 가지고 있는 데이터의 대표 이름 1개
+
+db.collectionName.insert([{객체~~~},{~~~}]); 현재 작업중인 DB에다가 내용을 추가하는 것(save와 insert의 차이는 뒤에서 다루기로 하자)
+db.name.insert({name : options})
+
+db.컬렉션명.find({}); 결과값들을 반환(아무 값이 없다면 중괄호는 생략해도 괜찮다.)
+
+db.____.find({비교하고자 하는 값 : {비교연산자 : 값, 비교연산자:값}});
+
+********************************************************************************************
+================================Query의 연산자이다============================================
+===============다양한 연산자들을 이용해서 조회할 document의 조건을 지정하는 것=========================
+<비교연산자>
+ $eq(equals) 			주어진 값과 일치하는 값 
+ $gt(greater than) 		주어진 값보다 큰 값 
+ $gte(greater than or equals) 	주어진 값보다 크거나 같은 값 
+ $lt(less than) 		주어진 값보다 작은 값 
+ $lte(less then or equals) 	주어진 값보다 작거나 같은 값 
+ $ne(not equlas) 		주어진 값과 일치하지 않는 값 
+ $in(in) 			주어진 배열 안에 속하는 값
+ $nin(not in) 			주어진 배열 안에 속하지 않는 값 
+
+db.collectionName.find({"document" : {연산자 : 값 ,연산자 : 값}})
+db.collectionName.find({"document" : {$in : ["값","값"]}})
+
+===========================================================================================
+<논리연산자>
+ $or	주어진 조건 중 하나라도 만족한다면 true 
+
+ $and	주어진 조건을 모두 만족해야만 true 
+
+ $not	주어진 조건이 거짓일 때 true 
+
+ $nor	주어진 모든 조건이 거짓일 때 true 
+
+db.collectionName.find({$or : [{~~~}, {~~~}]});
+
+===========================================================================================
+<$regex 연산자>
+연산자를 통하여 Document를 검색할 때 정규표현방식을 이용할 수 있습니다.
+$regex연산자를 사용하는 방식은 4가지가 있다.
+{ <field>: { $regex: /pattern/, $options: '<options>' } }
+{ <field>: { $regex: 'pattern', $options: '<options>' } }
+{ <field>: { $regex: /pattern/<options> } }
+{ <field>: /pattern/<options> }
+
+option	설명 
+
+ i	대소문자를 무시하고 검색 
+
+ m	정규식에서 (^) 를 사용 할 때(시작부분 검색) 줄바꿈을 무력화
+
+ x	정규식 안에 있는 공백을 모두 무시
+
+ s	dot( . - any chracter) 사용시 줄바꿈을 포함해서 매치 
+
+예문 : title 의 값이 정규표현식 article0[1-2] 를 만족하는 다큐먼트를 조회하려면
+>> db.articles.find({title:/article0[1-2]/}).pretty()
+	[]는 문자 한개를 의미
+	대쉬(-)는 ~에서 ~까지를 의미 <[1-2]는 1에서 2까지의 문자 1개를 의미한다.>
+
+===========================================================================================
+<$where 연산자>
+comments 필드가 비어있는 document를 조회하려면
+>> db.articles.find({$where:"this.comments.length === 0"}).pretty()
+
+===========================================================================================
+<$elemMatch 연산자>
+document 안에 있는 sub-document.들의 배열을 Query(정보를 요청하는 것) 할때 사용한다.
+>> db.articles.find({comments:{$elemMatch:{name:"Charlie"}}}).pretty()
+
+===============================여기까지 Query 연산자===========================================
+db.____.findOne({~~~});	여러개의 값중 일치하는 값 단 한가지만 출력한다.
+
+db.dropDatabase()	use____ 이렇게 데이터베이스를 선택되어 있는 상태에서 db.dropDatabase()를 해야 삭제가 진행된다.
+
+db.createCollection(name[options])	지정된 데이터베이스파일에 name이라는 컬렉션과 옵션을 설정하는것
+
+db.collectionName.drop()	컬렉션을 지우는것
+
+db.collectionName.drop(document) 컬렉션 안에 일부 document(내용)을 삭제한 것
+
+db.collectionName.insert({})	컬렉션 안에 도큐먼트를 추가하는것 (insert 메소드)
+
+db.collectionName.remove(critera, justOne)	document를 제거 critera는 조건이라는 의미, 객체형 데이터 타입으로 전달
+						빈객체로 전달될 경우 전체를 삭제하게 된다.
+						justOne은 optional매개변수로 boolean타입이다.
+						기본값은 false이며, 만약 값이 true로 지정되면 조건을 만족하는 1개의 Document만을 삭제한다.
+
+db.collectionName.find().pretty()	객체 내용들이 이쁘게 줄바꿈이 된다. 간격조절도 된다.
+
+********************************************************************************************
+=============================Projection 연산자(Boolean을 알자)================================
+=================어떤 필드에서는 표기하게하고, 어떤 필드에서는 표기하지 않도록하는 것=====================
+find()메소드의 두번째 속성인 projection
+--> 요청하는 값(Query)의 결과값을 보여줄때 표시하는 필드를 지정하는것이다.
+    document형식으로 지정하며, document 안의 key와 value의 값은 각각의 필드명, 표시여부(Boolean)이다.
+
+예) articles의 collection의 모든 document를 검색하는데 title과 content필드만을 보고싶다면(projection)
+>> db.articles.find({},{_id : false,title : true, content : true})
+>>title값과 content값만 출력하게 된다.
+
+===========================================================================================
+$slice 연산자
+projection의 $slice 연산자는 document 내의 배열을 불러올때의 갯수를 제한하는 역할을 한다.
+
+article의 comment가 2개가 있는데 그중 한개만 가져오도록 하기 위해선 어떻게 해야할까
+예) db.articles.find({title : "article03"},{comments : {$slice : 1}})
+>> projection을 통해서 한개의 comment값만 출력이 된
+
+===========================================================================================
+$elemMatch 연산자
+query의 것과 사용법이 같지만 역할이 약간 다르다
+query의 경우 연산자를 통해 조건을 만족하는 embeded document가 있는 document를 조회하는 것이었다.
+즉, 연산자의 조건을 만족하는 document의 모든 embeded document를 보여준다는 것이다.
+
+반면, projection의 경우에는 해당 연산자의 조건을 만족하는 embeded document만을 출력한다.
+>> db.articles.find(
+	{
+	  "comments" : {
+	   $elemMatch : {"name" : "Charlie"}
+	  }
+	},
+	{
+	 "title" : true,		--> 이부분이 projection과 Query의 가장 큰 차이점
+	 "comments.name" : true,
+	 "comments.message" : true
+	 }
+	).pretty()
+>> 결과는 comment 필드의 모든 Embeded Document를 출력
+
+>> db.article.find(
+	{
+	 "comment" : {
+	  $elemMatch : {"name" : "Charlie"}
+	 }
+	},
+	{
+	 "title" : true,
+	 "comments" : {
+	  $elemMatch : {"name" : "Charlie"}
+	},
+	 "comments.name" : true,
+	 "comments.message" : true
+	}
+	).pretty()
+
+===========================================================================================
+find의 Query와 prejection에 대해 마무리하며,
+find()메소드의 return값은 cursor 객체이다
+curso객체는 조회된 document의 객체로 sort(), limit(), skip()등의 메소드가 있다.
+
+===========================================================================================
+*******************************************************************************************************
+==============================<<find()의 결과를 활용하는>>===========================================================
+===============================sort(), limit(), skip()===========================================================
+cursor 객체는 find() 메소드의 query와 projection을 통해서 나온 document들을 담고있는 객체로,
+sort(), limit(), skip() 메소드가 있다.
+
+===========================================================================================
+*****cursor.sort(document)
+sort()메소드는 데이터를 정렬할 때 사용한다.
+메소드의 매개변수로는 document의 어떤 key를 사용하여 document들을 정렬할지 알려주는 document(객체)를 전달한다.
+매개변수로 들어오는 document의 위치에는 {key : value} 의 구조로 들어온다.
+key는 정렬할 기준이 되는 field의 name이고, value는 1 또는 -1이다.
+value가 1이면 오름차순
+       -1이면 내림차순으로 정렬
+
+예1) -id필드를 기준으로 오름차순으로 정렬
+db.orders.find().sort({_id:1})
+
+예2) amount 필드를 기준으로 오름차순 정렬, _id 필드를 기준으로 내림차순 정렬
+db.orders.find().sort({amount:1,_id:-1})
+>>여기에서 우선순위는 amount값이고 amount값중에 동일 값이 있을때 그때 _id 값으로 정렬을 한다.
+
+===========================================================================================
+*****cursor.limit(value)
+limit() 메소드는 출력하는 document의 갯수를 제한하는 메소드
+메소드의 인자 value의 값으로 숫자가 들어가는데, 이는 출력할 갯수이다.
+
+예) orders collection의 모든 데이터를 조회, 갯수는 3개로 제한
+db.orders.find().limit(3)
+
+===========================================================================================
+*****cursor.skip(value)
+skip() 메소드는 출력할 데이터의 시작부분을 설정하는 메소드
+value 값으로는 생략할 데이터의 갯수가 들어온다.
+
+예) 2개의 데이터를 생략하고, 3번째 데이터부터 출력
+db.orders.find().skip(2)
+===========================================================================================
+*****총 연습(page nation)
+3가지의 메소드를 활용해서 간단한 페이지네이션을 구현
+예) orders의 document들을 최신순으로 page nation 하는데, 한 페이지에 2개씩 나타낸다.
+>> var showPage = function(page){ 
+	return db.order.find().sort({_id:-1}).skip((page-1)*2).limit(2);
+	}
+	showPage(1)등등으로 입력해서 확인하면 된다.
+>>showPage 함수의 인지로는 page가 들어오는데 이것은 페이지의 넘버를 의미한다.
+	들어온 값이 1이면(1페이지) 0만큼 건너뛰고 2개를 표시, 2페이지면 2만큼 건너뛰고 2개를 표시하는 식이다.
+
+===========================================================================================
+*******************************************************************************************
+==================================document를 수정, update()==================================
+표현식 >> db.collectionName.update(<query>,<update>,<options>)
+query -> 업데이트 할 대상을 지정
+update -> 뭐라고 변경할지 데이터값은 document이다.
+options -> 객체 형식이며 세부 옵션은 예를 들면 {
+					  upsert : <boolean>, 
+					  multi:<boolean>, 
+					  writeConcern:<document>
+					}
+	       - upsert 값이 true이면, update()메소드의 첫번재 인자로 들어온 query로 검색된 document에 내용이 
+		 존재하지 않는다면 두번째 인자(update)로 새로운 document를 만듭니다.(기본값은 -false이다)
+	       - multi 값이 true면, query를 만족하는 여러 document를 수정한다.(기본값-false, 한개의 데이터만 수정)
+	       - writeConcern의 값은 document형식으로, document를 업데이트 할때 필요한 설정값을 지정하는 것.
+
+===========================================================================================
+예1) 특정 field update -- $set 연산자 사용
+>> db.people.update({name : "Abet"},{$set:{age : 20}})
+>> $set메소드를 이용하면 기존에 있는 필드의 값을 수정하는 것 뿐 아니라, document에 새로운 필드를 추가할 수도 있다.
+
+>> db.people.update({name:"Abet"},{$set:{nickName : "Alpha"}})
+
+===========================================================================================
+예2) document를 새로운 document로 대체하기
+기존의 document를 새로운 document로 대체하려면, update() 메소드의 두 번째 인자로 대체될 document를 주면된다.
+>>db.people.update({name:"Betty"},{name:"Betty 2nd", age:1})
+
+===========================================================================================
+예3) 특정 필드 제거하기 $unset 연산자 사용
+$unset 연산자의 값은 document(객체) 타입으로, KEY에는 삭제할 field를, value에는 숫자 1을 넣는다.
+여기서 숫자 1은 true를 의미(true를 입력해도 상관없다.)
+
+>> db.people.update({name : "David"},{$unset:{score : 1}})
+
+===========================================================================================
+예4) query에 해당하는 document가 존재하지 않을 경우 새로운 document를 추가
+query에 해당하는 document가 없을 경우 update() 메소드의 두번째 인자로 들어오는 document를 새로 추가하려면, 
+update() 메소드의 옵션을 이용.
+이에 해당하는 옵션이 upsert이다.
+>> db.people.update({name : "Elly"},{name : "Elly", age : 17},{upsert : true})
+
+===========================================================================================
+예5) 여러 document의 특정 field 수정하기
+people collection의 document들 중에서 age의 값이 20보다 작거나 같은 document들의 score를 10으로 수정
+>> db.people.update({age :{$lte : 20}}, {$set : {score : 10}}, {multi : true})
+
+===========================================================================================
+예6) 배열에 값 추가하기 $push 연산자 사용
+document 내부에 배열을 가지고 있는 경우 그 배열에 값을 추가해보자
+>> db.people.update({name : "Charlie"},{$push : {skills : "angularjs"}})
+
+예6-1) 배열에 값 여러개 추가, 정렬하기 $each, $sort 연산자
+값 추가와 알파벳 순으로 정렬하기
+>> db.people.update({name : "Charlie"},{$push : {skills :{$each : ["c++","java"], $sort : 1}}})
+
+===========================================================================================
+예7) 배열의 값 제거하기 $pull 연산자 사용
+document에서 특정 필드의 값 하나만 제거하는 $pull 연산자
+>> db.people.update({name:"Charlie"},{$pull : {skills : "mongodb"}})
+
+예7-1) 배열의 여러개의 값 제거하기 $pull, $in 연산자 사용
+비교연산자중 하나인 $in 연산자를 함께 사용
+>> db.people.update({name:"Charlie"},{$pull : {skills:{$in :["angularjs","java"]}}})
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
